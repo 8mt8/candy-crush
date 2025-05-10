@@ -16,27 +16,17 @@ const candyColors = [
 
 //create your board
 function createBoard() {
-    for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-            const candy = document.createElement("img");
-            candy.setAttribute("src", "./images/" + board[r][c] + ".png");
-            candy.setAttribute("id", r + "-" + c);
-            candy.addEventListener("dragstart", dragStart);
-            candy.addEventListener("dragover", dragOver);
-            candy.addEventListener("dragenter", dragEnter);
-            candy.addEventListener("dragleave", dragLeave);
-            candy.addEventListener("drop", dragDrop);
-            candy.addEventListener("dragend", dragEnd);
-            
-            // Add touch event listeners
-            candy.addEventListener("touchstart", handleTouchStart, { passive: false });
-            candy.addEventListener("touchmove", handleTouchMove, { passive: false });
-            candy.addEventListener("touchend", handleTouchEnd, { passive: false });
-            
-            document.getElementById("board").append(candy);
-        }
-    }
+  for (let i = 0; i < width * width; i++) {
+    const square = document.createElement('div');
+    square.setAttribute('draggable', true);
+    square.setAttribute('id', i);
+    let randomColor = Math.floor(Math.random() * candyColors.length);
+    square.style.backgroundImage = candyColors[randomColor];
+    grid.appendChild(square);
+    squares.push(square);
+  }
 }
+createBoard();
 
 // Prevent default touch behaviors globally
 document.addEventListener('touchmove', function(e) {
@@ -135,23 +125,16 @@ function handleTouchEnd(e) {
         const otherC = parseInt(otherCoords[1]);
         
         // Swap the candies
-        const temp = board[selectedR][selectedC];
-        board[selectedR][selectedC] = board[otherR][otherC];
-        board[otherR][otherC] = temp;
-        
-        // Update the images
-        selectedTile.setAttribute("src", "./images/" + board[selectedR][selectedC] + ".png");
-        otherTile.setAttribute("src", "./images/" + board[otherR][otherC] + ".png");
+        const temp = squares[selectedR * width + selectedC].style.backgroundImage;
+        squares[selectedR * width + selectedC].style.backgroundImage = squares[otherR * width + otherC].style.backgroundImage;
+        squares[otherR * width + otherC].style.backgroundImage = temp;
         
         // Check for matches
         if (!checkForMatches()) {
             // If no matches, swap back
-            const temp = board[selectedR][selectedC];
-            board[selectedR][selectedC] = board[otherR][otherC];
-            board[otherR][otherC] = temp;
-            
-            selectedTile.setAttribute("src", "./images/" + board[selectedR][selectedC] + ".png");
-            otherTile.setAttribute("src", "./images/" + board[otherR][otherC] + ".png");
+            const temp = squares[selectedR * width + selectedC].style.backgroundImage;
+            squares[selectedR * width + selectedC].style.backgroundImage = squares[otherR * width + otherC].style.backgroundImage;
+            squares[otherR * width + otherC].style.backgroundImage = temp;
         }
     }
     
