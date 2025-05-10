@@ -24,6 +24,10 @@ function createBoard() {
     square.style.backgroundImage = candyColors[randomColor];
     grid.appendChild(square);
     squares.push(square);
+    // Attach touch events for mobile swipe
+    square.addEventListener('touchstart', handleTouchStart, {passive: false});
+    square.addEventListener('touchmove', handleTouchMove, {passive: false});
+    square.addEventListener('touchend', handleTouchEnd, {passive: false});
   }
 }
 createBoard();
@@ -42,104 +46,58 @@ document.addEventListener('touchend', function(e) {
     e.preventDefault();
 }, { passive: false });
 
+// Touch swipe logic for mobile
 let touchStartX, touchStartY, touchEndX, touchEndY;
+let touchStartId = null;
 
 function handleTouchStart(e) {
     e.preventDefault();
-    const touch = e.touches[0];
-    touchStartX = touch.clientX;
-    touchStartY = touch.clientY;
-    const candy = e.target;
-    selectedTile = candy;
-    
-    // Add active state for visual feedback
-    candy.style.opacity = '0.7';
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchStartId = parseInt(this.id);
 }
 
 function handleTouchMove(e) {
     e.preventDefault();
-    if (!selectedTile) return;
-    
-    const touch = e.touches[0];
-    touchEndX = touch.clientX;
-    touchEndY = touch.clientY;
+    touchEndX = e.touches[0].clientX;
+    touchEndY = e.touches[0].clientY;
 }
 
 function handleTouchEnd(e) {
     e.preventDefault();
-    if (!selectedTile) return;
-    
-    // Reset opacity
-    selectedTile.style.opacity = '1';
-    
-    const candy = e.target;
-    const coords = candy.id.split("-");
-    const r = parseInt(coords[0]);
-    const c = parseInt(coords[1]);
-    
-    // Calculate the direction of the swipe
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
-    
-    // Add a minimum swipe distance threshold
-    const minSwipeDistance = 30;
-    
-    if (Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
-        selectedTile = null;
-        otherTile = null;
-        return;
-    }
-    
-    // Determine if the swipe was horizontal or vertical
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    if (touchStartId === null) return;
+
+    const dx = touchEndX - touchStartX;
+    const dy = touchEndY - touchStartY;
+    const minSwipe = 30; // Minimum swipe distance in px
+
+    let targetId = null;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > minSwipe) {
         // Horizontal swipe
-        if (deltaX > 0 && c < 7) {
-            // Swipe right
-            selectedTile = document.getElementById(r + "-" + c);
-            otherTile = document.getElementById(r + "-" + (c + 1));
-        } else if (deltaX < 0 && c > 0) {
-            // Swipe left
-            selectedTile = document.getElementById(r + "-" + c);
-            otherTile = document.getElementById(r + "-" + (c - 1));
+        if (dx > 0 && (touchStartId % width) < width - 1) {
+            targetId = touchStartId + 1; // right
+        } else if (dx < 0 && (touchStartId % width) > 0) {
+            targetId = touchStartId - 1; // left
         }
-    } else {
+    } else if (Math.abs(dy) > minSwipe) {
         // Vertical swipe
-        if (deltaY > 0 && r < 7) {
-            // Swipe down
-            selectedTile = document.getElementById(r + "-" + c);
-            otherTile = document.getElementById((r + 1) + "-" + c);
-        } else if (deltaY < 0 && r > 0) {
-            // Swipe up
-            selectedTile = document.getElementById(r + "-" + c);
-            otherTile = document.getElementById((r - 1) + "-" + c);
+        if (dy > 0 && touchStartId + width < width * width) {
+            targetId = touchStartId + width; // down
+        } else if (dy < 0 && touchStartId - width >= 0) {
+            targetId = touchStartId - width; // up
         }
     }
-    
-    if (selectedTile && otherTile) {
-        const selectedCoords = selectedTile.id.split("-");
-        const otherCoords = otherTile.id.split("-");
-        
-        const selectedR = parseInt(selectedCoords[0]);
-        const selectedC = parseInt(selectedCoords[1]);
-        const otherR = parseInt(otherCoords[0]);
-        const otherC = parseInt(otherCoords[1]);
-        
-        // Swap the candies
-        const temp = squares[selectedR * width + selectedC].style.backgroundImage;
-        squares[selectedR * width + selectedC].style.backgroundImage = squares[otherR * width + otherC].style.backgroundImage;
-        squares[otherR * width + otherC].style.backgroundImage = temp;
-        
-        // Check for matches
-        if (!checkForMatches()) {
-            // If no matches, swap back
-            const temp = squares[selectedR * width + selectedC].style.backgroundImage;
-            squares[selectedR * width + selectedC].style.backgroundImage = squares[otherR * width + otherC].style.backgroundImage;
-            squares[otherR * width + otherC].style.backgroundImage = temp;
+
+    if (targetId !== null) {
+        swapSquares(touchStartId, targetId);
+        if (!matchExists()) {
+            swapSquares(touchStartId, targetId); // revert if no match
+            squares[touchStartId].style.animation = 'shake 0.3s';
+            setTimeout(() => squares[touchStartId].style.animation = '', 300);
         }
     }
-    
-    selectedTile = null;
-    otherTile = null;
+
+    touchStartId = null;
 }
 
 // Helper to swap two squares
