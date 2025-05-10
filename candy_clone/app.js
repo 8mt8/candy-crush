@@ -38,17 +38,18 @@ function createBoard() {
     }
 }
 
-// Prevent default touch behaviors
+// Prevent default touch behaviors globally
 document.addEventListener('touchmove', function(e) {
-    if (e.target.closest('#board')) {
-        e.preventDefault();
-    }
+    e.preventDefault();
 }, { passive: false });
 
 document.addEventListener('touchstart', function(e) {
-    if (e.target.closest('#board')) {
-        e.preventDefault();
-    }
+    e.preventDefault();
+}, { passive: false });
+
+// Prevent double-tap zoom
+document.addEventListener('touchend', function(e) {
+    e.preventDefault();
 }, { passive: false });
 
 let touchStartX, touchStartY, touchEndX, touchEndY;
@@ -60,6 +61,9 @@ function handleTouchStart(e) {
     touchStartY = touch.clientY;
     const candy = e.target;
     selectedTile = candy;
+    
+    // Add active state for visual feedback
+    candy.style.opacity = '0.7';
 }
 
 function handleTouchMove(e) {
@@ -75,6 +79,9 @@ function handleTouchEnd(e) {
     e.preventDefault();
     if (!selectedTile) return;
     
+    // Reset opacity
+    selectedTile.style.opacity = '1';
+    
     const candy = e.target;
     const coords = candy.id.split("-");
     const r = parseInt(coords[0]);
@@ -83,6 +90,15 @@ function handleTouchEnd(e) {
     // Calculate the direction of the swipe
     const deltaX = touchEndX - touchStartX;
     const deltaY = touchEndY - touchStartY;
+    
+    // Add a minimum swipe distance threshold
+    const minSwipeDistance = 30;
+    
+    if (Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
+        selectedTile = null;
+        otherTile = null;
+        return;
+    }
     
     // Determine if the swipe was horizontal or vertical
     if (Math.abs(deltaX) > Math.abs(deltaY)) {

@@ -1,3 +1,34 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: fixed;
+    touch-action: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-image: url("candy-crush-background-2.png");
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: fixed;
+    touch-action: none;
+    -webkit-overflow-scrolling: none;
+    overscroll-behavior: none;
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
@@ -12,6 +43,8 @@
     color: #85796b;
     gap: 2px;
     touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .grid div {
@@ -20,6 +53,9 @@
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 h3 {
@@ -37,40 +73,24 @@ h1 {
     background-color: white;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  background-image: url("candy-crush-background-2.png");
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  position: fixed;
-  touch-action: none;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
 .score-board {
   display: none;
 }
 
 @media (max-width: 400px) {
-  .grid {
-    max-width: 95vw;
-    width: 95vw;
-  }
-  
-  body {
-    padding: 0;
-    margin: 0;
-    height: 100vh;
-    width: 100vw;
-    overflow: hidden;
-  }
+    .grid {
+        max-width: 95vw;
+        width: 95vw;
+    }
+    
+    body {
+        padding: 0;
+        margin: 0;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        position: fixed;
+    }
 }
 
 @keyframes shake {
@@ -83,15 +103,4 @@ body {
 
 .shake {
   animation: shake 0.3s;
-}
-
-html, body {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  touch-action: none;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
