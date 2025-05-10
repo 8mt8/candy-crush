@@ -16,73 +16,131 @@ const candyColors = [
 
 //create your board
 function createBoard() {
-  for (let i = 0; i < width*width; i++) {
-    const square = document.createElement('div')
-    square.setAttribute('draggable', true)
-    square.setAttribute('id', i)
-    let randomColor = Math.floor(Math.random() * candyColors.length)
-    square.style.backgroundImage = candyColors[randomColor]
-    grid.appendChild(square)
-    squares.push(square)
-  }
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const candy = document.createElement("img");
+            candy.setAttribute("src", "./images/" + board[r][c] + ".png");
+            candy.setAttribute("id", r + "-" + c);
+            candy.addEventListener("dragstart", dragStart);
+            candy.addEventListener("dragover", dragOver);
+            candy.addEventListener("dragenter", dragEnter);
+            candy.addEventListener("dragleave", dragLeave);
+            candy.addEventListener("drop", dragDrop);
+            candy.addEventListener("dragend", dragEnd);
+            
+            // Add touch event listeners
+            candy.addEventListener("touchstart", handleTouchStart, { passive: false });
+            candy.addEventListener("touchmove", handleTouchMove, { passive: false });
+            candy.addEventListener("touchend", handleTouchEnd, { passive: false });
+            
+            document.getElementById("board").append(candy);
+        }
+    }
 }
-createBoard()
 
-// Dragging the Candy
-let colorBeingDragged
-let colorBeingReplaced
-let squareIdBeingDragged
-let squareIdBeingReplaced
-let isDragging = false;
-let touchStartId = null;
+// Prevent default touch behaviors
+document.addEventListener('touchmove', function(e) {
+    if (e.target.closest('#board')) {
+        e.preventDefault();
+    }
+}, { passive: false });
 
-squares.forEach(square => {
-    square.addEventListener('touchstart', handleTouchStart, {passive: false});
-    square.addEventListener('touchend', handleTouchEnd, {passive: false});
-});
+document.addEventListener('touchstart', function(e) {
+    if (e.target.closest('#board')) {
+        e.preventDefault();
+    }
+}, { passive: false });
 
-grid.addEventListener('touchmove', function(e) {
-    e.preventDefault(); // Prevent scrolling while swiping on the grid
-}, {passive: false});
+let touchStartX, touchStartY, touchEndX, touchEndY;
 
 function handleTouchStart(e) {
     e.preventDefault();
-    isDragging = true;
-    touchStartId = parseInt(this.id);
-    colorBeingDragged = this.style.backgroundImage;
-    squareIdBeingDragged = touchStartId;
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    const candy = e.target;
+    selectedTile = candy;
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+    if (!selectedTile) return;
+    
+    const touch = e.touches[0];
+    touchEndX = touch.clientX;
+    touchEndY = touch.clientY;
 }
 
 function handleTouchEnd(e) {
     e.preventDefault();
-    isDragging = false;
-    const touch = e.changedTouches[0];
-    const elem = document.elementFromPoint(touch.clientX, touch.clientY);
-    if (!elem || !elem.id || !elem.classList.contains('grid')) {
-        // Try to get the parent if the image is tapped
-        if (elem && elem.parentElement && elem.parentElement.classList.contains('grid')) {
-            squareIdBeingReplaced = parseInt(elem.id);
-        } else {
-            squareIdBeingDragged = null;
-            squareIdBeingReplaced = null;
-            return;
+    if (!selectedTile) return;
+    
+    const candy = e.target;
+    const coords = candy.id.split("-");
+    const r = parseInt(coords[0]);
+    const c = parseInt(coords[1]);
+    
+    // Calculate the direction of the swipe
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    
+    // Determine if the swipe was horizontal or vertical
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Horizontal swipe
+        if (deltaX > 0 && c < 7) {
+            // Swipe right
+            selectedTile = document.getElementById(r + "-" + c);
+            otherTile = document.getElementById(r + "-" + (c + 1));
+        } else if (deltaX < 0 && c > 0) {
+            // Swipe left
+            selectedTile = document.getElementById(r + "-" + c);
+            otherTile = document.getElementById(r + "-" + (c - 1));
         }
     } else {
-        squareIdBeingReplaced = parseInt(elem.id);
-    }
-    let validMoves = [touchStartId -1 , touchStartId -width, touchStartId +1, touchStartId +width];
-    let validMove = validMoves.includes(squareIdBeingReplaced);
-    if (touchStartId !== null && squareIdBeingReplaced !== null && validMove) {
-        swapSquares(touchStartId, squareIdBeingReplaced);
-        if (!matchExists()) {
-            swapSquares(touchStartId, squareIdBeingReplaced); // revert
-            squares[touchStartId].style.animation = 'shake 0.3s';
-            setTimeout(() => squares[touchStartId].style.animation = '', 300);
+        // Vertical swipe
+        if (deltaY > 0 && r < 7) {
+            // Swipe down
+            selectedTile = document.getElementById(r + "-" + c);
+            otherTile = document.getElementById((r + 1) + "-" + c);
+        } else if (deltaY < 0 && r > 0) {
+            // Swipe up
+            selectedTile = document.getElementById(r + "-" + c);
+            otherTile = document.getElementById((r - 1) + "-" + c);
         }
     }
-    squareIdBeingDragged = null;
-    squareIdBeingReplaced = null;
-    touchStartId = null;
+    
+    if (selectedTile && otherTile) {
+        const selectedCoords = selectedTile.id.split("-");
+        const otherCoords = otherTile.id.split("-");
+        
+        const selectedR = parseInt(selectedCoords[0]);
+        const selectedC = parseInt(selectedCoords[1]);
+        const otherR = parseInt(otherCoords[0]);
+        const otherC = parseInt(otherCoords[1]);
+        
+        // Swap the candies
+        const temp = board[selectedR][selectedC];
+        board[selectedR][selectedC] = board[otherR][otherC];
+        board[otherR][otherC] = temp;
+        
+        // Update the images
+        selectedTile.setAttribute("src", "./images/" + board[selectedR][selectedC] + ".png");
+        otherTile.setAttribute("src", "./images/" + board[otherR][otherC] + ".png");
+        
+        // Check for matches
+        if (!checkForMatches()) {
+            // If no matches, swap back
+            const temp = board[selectedR][selectedC];
+            board[selectedR][selectedC] = board[otherR][otherC];
+            board[otherR][otherC] = temp;
+            
+            selectedTile.setAttribute("src", "./images/" + board[selectedR][selectedC] + ".png");
+            otherTile.setAttribute("src", "./images/" + board[otherR][otherC] + ".png");
+        }
+    }
+    
+    selectedTile = null;
+    otherTile = null;
 }
 
 // Helper to swap two squares
