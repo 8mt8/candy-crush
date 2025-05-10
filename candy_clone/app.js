@@ -4,6 +4,7 @@ const scoreDisplay = document.getElementById('score')
 const width = 8
 const squares = []
 let score = 0
+let isRemoving = false;
 
 const candyColors = [
     'url(images/foto_final_1.png)',
@@ -221,6 +222,7 @@ function moveIntoSquareBelow() {
 
 // Animate removal in all match functions
 function animateRemove(index) {
+    isRemoving = true;
     squares[index].style.transition = 'opacity 0.3s, transform 0.3s';
     squares[index].style.opacity = '0';
     squares[index].style.transform = 'scale(0)';
@@ -230,6 +232,11 @@ function animateRemove(index) {
         squares[index].style.transform = 'scale(1)';
         squares[index].style.transition = '';
     }, 300);
+}
+
+// Helper to check if any removals are happening
+function anyRemovals() {
+    return Array.from(squares).some(square => square.style.opacity === '0');
 }
 
 // Update all match functions to use animateRemove
@@ -315,10 +322,22 @@ function checkColumnForThree() {
 
 // Checks carried out indefinitely
 window.setInterval(() => {
-  checkRowForFour();
-  checkColumnForFour();
-  checkRowForThree();
-  checkColumnForThree();
-  moveIntoSquareBelow();
+  if (!isRemoving) {
+    let removed = false;
+    checkRowForFour();
+    checkColumnForFour();
+    checkRowForThree();
+    checkColumnForThree();
+    // If any removals happened, wait for animation before gravity
+    if (anyRemovals()) {
+      isRemoving = true;
+      setTimeout(() => {
+        moveIntoSquareBelow();
+        isRemoving = false;
+      }, 300);
+    } else {
+      moveIntoSquareBelow();
+    }
+  }
 }, 300);
 })
