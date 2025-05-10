@@ -315,12 +315,10 @@ function checkColumnForThree() {
 
 // Checks carried out indefinitely
 window.setInterval(() => {
-  if (!isDragging) {
-    checkRowForFour();
-    checkColumnForFour();
-    checkRowForThree();
-    checkColumnForThree();
-    moveIntoSquareBelow();
-  }
+  checkRowForFour();
+  checkColumnForFour();
+  checkRowForThree();
+  checkColumnForThree();
+  moveIntoSquareBelow();
 }, 300);
 })
